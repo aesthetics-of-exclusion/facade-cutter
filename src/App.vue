@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <header>
-      <router-link v-if="currentIndex > 1 && loaded" :to="{
-        name: 'facade',
+      <router-link v-if="loaded && currentIndex > 1" :to="{
+        name: $route.name,
         params: {
           index: currentIndex - 1,
           id: pois[currentIndex - 2].id
@@ -15,8 +15,8 @@
         Aesthetics of Exclusion - Facade Cutter
       </router-link>
 
-      <router-link v-if="currentIndex < pois.length && loaded" :to="{
-        name: 'facade',
+      <router-link v-if="loaded && currentIndex < pois.length" :to="{
+        name: $route.name,
         params: {
           index: currentIndex + 1,
           id: pois[currentIndex].id
@@ -27,32 +27,59 @@
     </header>
     <main>
       <div class="loading" v-if="!loaded">
-        <span>Loading</span>
+        <span>Loading...</span>
       </div>
       <template v-if="$route.name === 'main'">
-        <List :apiUrl="apiUrl" :pois="pois" />
+        <ListFacades :apiUrl="apiUrl" :pois="pois" />
       </template>
-      <template v-else-if="$route.name === 'facade'">
-        <Facade :apiUrl="apiUrl" :id="$route.params.id" />
+      <template v-else-if="$route.name === 'edit'">
+        <EditFacade :apiUrl="apiUrl" :id="$route.params.id" />
+      </template>
+      <template v-else-if="$route.name === 'view'">
+        <ViewFacade :apiUrl="apiUrl" :id="$route.params.id" />
       </template>
       <template v-else>
         Error!
       </template>
     </main>
+
+    <footer>
+      <router-link v-if="loaded && $route.name === 'edit'" :to="{
+        name: 'view',
+        params: {
+          index: currentIndex,
+          id: pois[currentIndex - 1].id
+        }
+      }">
+        View facade
+      </router-link>
+      <router-link v-else-if="loaded && $route.name === 'view'" :to="{
+        name: 'edit',
+        params: {
+          index: currentIndex,
+          id: pois[currentIndex - 1].id
+        }
+      }">
+        Edit facade
+      </router-link>
+      <div v-else>-</div>
+    </footer>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 
-import List from './components/List'
-import Facade from './components/Facade'
+import ListFacades from './components/ListFacades'
+import EditFacade from './components/EditFacade'
+import ViewFacade from './components/ViewFacade'
 
 export default {
   name: 'App',
   components: {
-    List,
-    Facade
+    ListFacades,
+    EditFacade,
+    ViewFacade
   },
   data: function () {
     return {
@@ -65,7 +92,7 @@ export default {
       return this.pois.length > 0
     },
     currentIndex: function () {
-      return parseInt(this.$route.params.index)
+      return this.$route.params.index && parseInt(this.$route.params.index)
     }
   },
   mounted: async function () {
@@ -77,6 +104,10 @@ export default {
 </script>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -95,30 +126,39 @@ body {
   height: 100%;
 }
 
+section {
+  padding: 1em;
+}
+
 .loading {
   width: 100%;
   height: 100%;
+  flex-shrink: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
+/*
 .container {
   width: 100%;
   height: 100%;
-}
+} */
 
 a, a:visited {
   color: black;
 }
 
-header {
+header, footer {
   background-color: #ff86e1;
   padding: 5px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+}
+
+footer {
+  justify-content: center;
 }
 
 .main-link {
@@ -136,7 +176,7 @@ header a:last-child {
 }
 
 main {
-  width: 100%;
-  height: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
 }
 </style>

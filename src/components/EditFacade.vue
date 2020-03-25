@@ -24,28 +24,21 @@
 </template>
 <script>
 import {update} from 'ramda'
-import axios from 'axios'
+
+import FacadeAPI from './FacadeAPI'
 
 export default {
+  mixins: [FacadeAPI],
   props: {
     apiUrl: String,
     id: String,
   },
   data: function () {
     return {
-      color: '#ff86e1',
-      data: undefined,
-      mask: []
-    }
-  },
-  watch: {
-    id: function () {
-      this.loadData()
+      color: '#ff86e1'
     }
   },
   mounted: function () {
-    this.loadData()
-
     document.addEventListener('mouseup', () => {
       if (this.mouseMoveHandler) {
         document.removeEventListener('mousemove', this.mouseMoveHandler)
@@ -53,15 +46,6 @@ export default {
 
       this.postMask()
     })
-  },
-  computed: {
-    imageUrl: function () {
-      if (this.data) {
-        return this.data.imageUrl
-      } else {
-        return ''
-      }
-    }
   },
   methods: {
     makeInitialMask: function (dimensions, padding) {
@@ -76,31 +60,6 @@ export default {
         [maxX - padding, maxY - padding],
         [minX + padding, maxY - padding]
       ]
-    },
-    loadData: async function () {
-      const id = this.id
-      const url = `${this.apiUrl}facades/${id}.json`
-      const response = await axios.get(url)
-
-      this.data = response.data
-
-      if (this.data.mask) {
-        this.mask = this.data.mask
-      } else {
-        this.mask = this.makeInitialMask(this.data.streetView.dimensions, 200)
-      }
-    },
-    postMask: async function () {
-      const id = this.id
-      const mask = this.mask
-
-      await axios({
-        method: 'post',
-        url: `${this.apiUrl}facades/${id}`,
-        data: {
-          mask
-        }
-      })
     },
     previousPoint: function (index) {
       return this.mask[(index - 1 + this.mask.length) % this.mask.length]
@@ -126,7 +85,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .facade {
   width: 100%;
   height: 100%;

@@ -14,8 +14,13 @@ const router = new VueRouter({
       component: App
     },
     {
-      name: 'facade',
-      path: '/:index/:id',
+      name: 'edit',
+      path: '/edit/:index/:id',
+      component: App
+    },
+    {
+      name: 'view',
+      path: '/view/:index/:id',
       component: App
     }
   ]
