@@ -39,15 +39,19 @@ export default {
     }
   },
   mounted: function () {
-    document.addEventListener('mouseup', () => {
+    document.addEventListener('mouseup', this.mouseupHandler)
+  },
+  beforeDestroy: function () {
+    document.removeEventListener('mouseup', this.mouseupHandler)
+  },
+  methods: {
+    mouseupHandler: function () {
       if (this.mouseMoveHandler) {
         document.removeEventListener('mousemove', this.mouseMoveHandler)
       }
 
       this.postMask()
-    })
-  },
-  methods: {
+    },
     makeInitialMask: function (dimensions, padding) {
       const minX = 0
       const minY = 0

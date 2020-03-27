@@ -26,21 +26,23 @@
       </a>
     </header>
     <main>
-      <div class="loading" v-if="!loaded">
-        <span>Loading...</span>
+      <div class="container">
+        <div class="loading" v-if="!loaded">
+          <span>Loading...</span>
+        </div>
+        <template v-if="$route.name === 'main'">
+          <ListFacades :apiUrl="apiUrl" :pois="pois" />
+        </template>
+        <template v-else-if="$route.name === 'edit'">
+          <EditFacade :apiUrl="apiUrl" :id="$route.params.id" />
+        </template>
+        <template v-else-if="$route.name === 'view'">
+          <ViewFacade :apiUrl="apiUrl" :id="$route.params.id" />
+        </template>
+        <template v-else>
+          Error!
+        </template>
       </div>
-      <template v-if="$route.name === 'main'">
-        <ListFacades :apiUrl="apiUrl" :pois="pois" />
-      </template>
-      <template v-else-if="$route.name === 'edit'">
-        <EditFacade :apiUrl="apiUrl" :id="$route.params.id" />
-      </template>
-      <template v-else-if="$route.name === 'view'">
-        <ViewFacade :apiUrl="apiUrl" :id="$route.params.id" />
-      </template>
-      <template v-else>
-        Error!
-      </template>
     </main>
 
     <footer>
@@ -138,11 +140,6 @@ section {
   align-items: center;
   justify-content: center;
 }
-/*
-.container {
-  width: 100%;
-  height: 100%;
-} */
 
 a, a:visited {
   color: black;
@@ -178,5 +175,13 @@ header a:last-child {
 main {
   flex-grow: 1;
   overflow-y: auto;
+}
+
+.container {
+  margin: 0 auto;
+  width: 800px;
+  height: 100%;
+  min-height: 100%;
+  max-width: 100%;
 }
 </style>
