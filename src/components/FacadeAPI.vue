@@ -1,59 +1,116 @@
 <script>
-import axios from 'axios'
-
 export default {
   props: {
-    apiUrl: String,
-    id: String,
+    db: Object,
+    poiId: String
   },
   data: function () {
     return {
-      data: undefined,
-      mask: []
+      annotations: [],
+      facadeAnnotationRef: undefined,
+      mask: [],
+      error: undefined
     }
   },
   watch: {
-    id: function () {
-      this.loadData()
+    poiId: function () {
+      this.loadData(this.poiId)
     }
   },
   mounted: function () {
-    this.loadData()
+    this.loadData(this.poiId)
   },
   computed: {
-    imageUrl: function () {
-      if (this.data) {
-        return this.data.imageUrl
+    screenshotUrl: function () {
+      if (this.screenshotAnnotation) {
+        return this.screenshotAnnotation.data.screenshotUrl
       } else {
         return ''
       }
+    },
+    osmAnnotation: function () {
+      return this.annotationsOfType(this.annotations, 'osm')[0]
+    },
+    facadeAnnotation: function () {
+      return this.annotationsOfType(this.annotations, 'facade')[0]
+    },
+    screenshotAnnotation: function () {
+      return this.annotationsOfType(this.annotations, 'screenshot')[0]
     }
   },
   methods: {
-    loadData: async function () {
-      const id = this.id
-      const url = `${this.apiUrl}facades/${id}.json`
-      const response = await axios.get(url)
+    annotationsOfType: function (annotations, type) {
+      return annotations.filter((annotation) => annotation.type === type)
+    },
+    loadData: async function (poiId) {
+      try {
+        const query = this.db.collection('pois')
+          .doc(poiId)
+          .collection('annotations')
+          .where('type', 'in', ['osm', 'screenshot', 'facade'])
 
-      this.data = response.data
+        const annotationRefs = await query.get()
 
-      if (this.data.mask) {
-        this.mask = this.data.mask
-      } else {
-        this.mask = this.makeInitialMask(this.data.streetView.dimensions, 200)
+        if (annotationRefs.empty) {
+          throw new Error(`No screenshot annotation found for POI with ID ${this.poiId}`)
+        } else {
+          this.annotations = annotationRefs.docs.map((doc) => doc.data())
+
+          if (this.facadeAnnotation) {
+            const facadeAnnotationRefs = annotationRefs.docs.filter((doc) => doc.data().type === 'facade')
+            this.facadeAnnotationRef = facadeAnnotationRefs[0]
+          } else {
+            this.facadeAnnotationRef = this.db
+              .collection('pois')
+              .doc(poiId)
+              .collection('annotations')
+              .doc()
+          }
+        }
+      } catch (err) {
+        console.error(err)
+        this.error = err.message
       }
     },
-    postMask: async function () {
-      const id = this.id
-      const mask = this.mask
+    saveAnnotation: async function (annotationId, type, data) {
+      let dateCreated = new Date()
+      if (this.facadeAnnotation) {
+        dateCreated = this.facadeAnnotation.dateCreated
+      }
 
-      await axios({
-        method: 'post',
-        url: `${this.apiUrl}facades/${id}`,
-        data: {
-          mask
-        }
+      console.log('Save!')
+
+      await this.updateAnnotationCount(this.poiId, type, 1)
+
+      const poiRef = this.getPoiRef(this.poiId)
+      await poiRef.collection('annotations').doc(annotationId).set({
+        poiId: this.poiId,
+        type,
+        data,
+        dateCreated,
+        dateUpdated: new Date()
       })
+    },
+    getPoiRef: function (poiId) {
+      return this.db.collection('pois').doc(poiId)
+    },
+    updateAnnotationCount: async function (poiId, type, increment) {
+      const poiRef = this.getPoiRef(poiId)
+      const poi = await poiRef.get()
+
+      let updatedPoiRef
+      if (increment !== undefined) {
+        const count = (poi.annotations && poi.annotations[type]) || 0
+        updatedPoiRef = await poiRef.update({
+          [`annotations.${type}`]: count + increment
+        })
+      } else {
+        updatedPoiRef = poiRef.update({
+          [`annotations.${type}`]: FieldValue.delete()
+        })
+      }
+
+      return updatedPoiRef
     }
   }
 }

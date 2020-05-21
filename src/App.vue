@@ -1,106 +1,110 @@
 <template>
   <div id="app">
-    <header>
-      <router-link v-if="loaded && currentIndex > 1" :to="{
-        name: $route.name,
-        params: {
-          index: currentIndex - 1,
-          id: pois[currentIndex - 2].id
-        }
-      }" >⟵ Previous</router-link>
-      <a v-else>
-      </a>
-
-      <router-link :to="{name: 'main'}" class="main-link">
-        Aesthetics of Exclusion - Facade Cutter
-      </router-link>
-
-      <router-link v-if="loaded && currentIndex < pois.length" :to="{
-        name: $route.name,
-        params: {
-          index: currentIndex + 1,
-          id: pois[currentIndex].id
-        }
-      }" >Next ⟶</router-link>
-      <a v-else>
-      </a>
-    </header>
     <main>
       <div class="container">
-        <div class="loading" v-if="!loaded">
+        <div class="loading" v-if="!$route.params.poiId || !db">
           <span>Loading...</span>
         </div>
-        <template v-if="$route.name === 'main'">
-          <ListFacades :apiUrl="apiUrl" :pois="pois" />
-        </template>
         <template v-else-if="$route.name === 'edit'">
-          <EditFacade :apiUrl="apiUrl" :id="$route.params.id" />
+          <EditFacade :db="db" :poiId="$route.params.poiId" />
         </template>
         <template v-else-if="$route.name === 'view'">
-          <ViewFacade :apiUrl="apiUrl" :id="$route.params.id" />
+          <ViewFacade :db="db" :poiId="$route.params.poiId" />
         </template>
         <template v-else>
           Error!
         </template>
       </div>
     </main>
-
-    <footer>
-      <router-link v-if="loaded && $route.name === 'edit'" :to="{
-        name: 'view',
-        params: {
-          index: currentIndex,
-          id: pois[currentIndex - 1].id
-        }
-      }">
-        View facade
-      </router-link>
-      <router-link v-else-if="loaded && $route.name === 'view'" :to="{
-        name: 'edit',
-        params: {
-          index: currentIndex,
-          id: pois[currentIndex - 1].id
-        }
-      }">
-        Edit facade
-      </router-link>
-      <div v-else>-</div>
-    </footer>
+    <section id="firebaseui-auth-container"></section>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import * as firebase from 'firebase'
+import * as firebaseui from 'firebaseui'
+import 'firebaseui/dist/firebaseui.css'
 
-import ListFacades from './components/ListFacades'
+const redirectUrl = process.env.VUE_APP_REDIRECT_URL
+
+const uiConfig = {
+  signInSuccessUrl: redirectUrl,
+  signInFlow: 'popup',
+  signInOptions: [
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID
+  ]
+}
+
 import EditFacade from './components/EditFacade'
 import ViewFacade from './components/ViewFacade'
 
 export default {
   name: 'App',
   components: {
-    ListFacades,
     EditFacade,
     ViewFacade
   },
   data: function () {
     return {
-      apiUrl: 'https://facade-cutter-api.glitch.me/',
-      pois: []
+      db: undefined,
+      error: undefined
     }
   },
-  computed: {
-    loaded: function () {
-      return this.pois.length > 0
-    },
-    currentIndex: function () {
-      return this.$route.params.index && parseInt(this.$route.params.index)
+  watch: {
+     '$route.params.poiId': function () {
+       if (!this.$route.params.poiId) {
+         this.loadScreenshot()
+       }
+     }
+  },
+  methods: {
+    loadScreenshot: async function () {
+      try {
+        const query = this.db.collection('pois')
+          .where('annotations.facade', '==', 0)
+          .limit(1)
+
+        const annotationRefs = await query.get()
+
+        if (annotationRefs.empty) {
+          throw new Error('No POIs found')
+        } else {
+          const poiId = annotationRefs.docs[0].id
+
+          if (this.$route.name === 'main') {
+            this.$router.push({
+              name: 'edit',
+              params: {
+                poiId
+              }
+            })
+          }
+        }
+      } catch (err) {
+        console.error(err)
+        this.error = err.message
+      }
     }
+  },
+  created: function () {
+    firebase.auth().onAuthStateChanged((user) => {
+      this.user = user
+    })
   },
   mounted: async function () {
-    const url = `${this.apiUrl}facades`
-    const response = await axios.get(url)
-    this.pois = response.data
+    let ui = firebaseui.auth.AuthUI.getInstance()
+    if (!ui) {
+      ui = new firebaseui.auth.AuthUI(firebase.auth())
+    }
+
+    ui.start('#firebaseui-auth-container', uiConfig)
+    this.ui = ui
+
+    this.db = firebase.firestore()
+
+    if (this.$route.name === 'main') {
+      this.loadScreenshot()
+    }
   }
 }
 </script>
@@ -143,33 +147,6 @@ section {
 
 a, a:visited {
   color: black;
-}
-
-header, footer {
-  background-color: #ff86e1;
-  padding: 5px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-}
-
-footer {
-  justify-content: center;
-}
-
-.main-link {
-  font-weight: bold;
-  padding: 0 1em;
-}
-
-header a {
-  text-decoration: none;
-  min-width: 110px;
-}
-
-header a:last-child {
-  text-align: right;
 }
 
 main {

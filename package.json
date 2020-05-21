@@ -9,8 +9,9 @@
     "deploy": "npm run build; push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
-    "axios": "^0.19.2",
     "core-js": "^3.6.4",
+    "firebase": "^7.14.4",
+    "firebaseui": "^4.5.0",
     "ramda": "^0.27.0",
     "vue": "^2.6.11",
     "vue-router": "^3.1.6"
@@ -37,7 +38,11 @@
     "parserOptions": {
       "parser": "babel-eslint"
     },
-    "rules": {}
+    "rules": {
+      "no-console": "off",
+      "no-undef": "off",
+      "no-unused-vars": "off"
+    }
   },
   "browserslist": [
     "> 1%",
