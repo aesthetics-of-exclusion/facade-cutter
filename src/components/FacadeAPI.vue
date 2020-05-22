@@ -78,18 +78,18 @@ export default {
         dateCreated = this.facadeAnnotation.dateCreated
       }
 
-      console.log('Save!')
-
       await this.updateAnnotationCount(this.poiId, type, 1)
 
       const poiRef = this.getPoiRef(this.poiId)
-      await poiRef.collection('annotations').doc(annotationId).set({
+      const updatedPoiRef = await poiRef.collection('annotations').doc(annotationId).set({
         poiId: this.poiId,
         type,
         data,
         dateCreated,
         dateUpdated: new Date()
       })
+
+      return updatedPoiRef
     },
     getPoiRef: function (poiId) {
       return this.db.collection('pois').doc(poiId)

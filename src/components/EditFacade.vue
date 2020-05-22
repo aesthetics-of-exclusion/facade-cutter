@@ -25,11 +25,12 @@
     </div>
     <div class="buttons">
       <button @click="save">Save</button>
+      <span>{{ message }}</span>
       <button @click="next">Next</button>
     </div>
   </div>
   <div v-else>
-    Nee!
+    Log in om te beginnen!
   </div>
 </template>
 <script>
@@ -45,6 +46,7 @@ export default {
   data: function () {
     return {
       color: '#ff86e1',
+      message: '',
       dimensions: [],
       mask: []
     }
@@ -74,10 +76,15 @@ export default {
     }
   },
   methods: {
-    save: function () {
-      this.saveAnnotation(this.facadeAnnotationRef.id, 'facade', {
-        mask: this.mask
-      })
+    save: async function () {
+      try {
+        await this.saveAnnotation(this.facadeAnnotationRef.id, 'facade', {
+          mask: this.mask
+        })
+        this.message = 'Saved!'
+      } catch (err) {
+        this.message = `Error saving: ${err.message}!`
+      }
     },
     next: function () {
       this.$router.push({
