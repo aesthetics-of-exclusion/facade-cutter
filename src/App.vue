@@ -12,7 +12,7 @@
           <ViewFacade :db="db" :poiId="$route.params.poiId" />
         </template>
         <template v-else>
-          Error!
+          Log in om te beginnen
         </template>
       </div>
     </main>
