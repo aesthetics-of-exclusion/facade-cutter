@@ -36,13 +36,11 @@ const uiConfig = {
 }
 
 import EditFacade from './components/EditFacade'
-import ViewFacade from './components/ViewFacade'
 
 export default {
   name: 'App',
   components: {
-    EditFacade,
-    ViewFacade
+    EditFacade
   },
   data: function () {
     return {

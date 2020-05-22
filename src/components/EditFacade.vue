@@ -45,16 +45,20 @@ export default {
   data: function () {
     return {
       color: '#ff86e1',
+      dimensions: [],
       mask: []
     }
   },
   watch: {
     annotations: function () {
+      if (this.screenshotAnnotation) {
+        this.dimensions = this.screenshotAnnotation.data.dimensions
+      }
+
       if (this.facadeAnnotation) {
         this.mask = this.facadeAnnotation.data.mask
       } else if (this.screenshotAnnotation) {
-        const dimensions = this.screenshotAnnotation.data.dimensions
-        this.mask = this.makeInitialMask(dimensions, 200)
+        this.mask = this.makeInitialMask(this.dimensions, 200)
       }
     }
   },
@@ -116,7 +120,16 @@ export default {
       circle.y = event.pageY
 
       const transformedCircle = circle.matrixTransform(svg.getScreenCTM().inverse())
-      this.mask = update(index, {x: Math.round(transformedCircle.x), y: Math.round(transformedCircle.y)}, this.mask)
+
+      const x = Math.round(transformedCircle.x)
+      const y = Math.round(transformedCircle.y)
+
+      const coordinate = {
+        x: Math.min(Math.max(0, x), this.dimensions[0]),
+        y: Math.min(Math.max(0, y), this.dimensions[1])
+      }
+
+      this.mask = update(index, coordinate, this.mask)
     }
   }
 }
