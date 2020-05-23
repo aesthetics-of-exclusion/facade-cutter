@@ -179,4 +179,14 @@ h1, h2, h3 {
 .facade svg line {
   cursor: pointer;
 }
+
+.buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.buttons > * {
+  padding: 1em;
+}
+
 </style>
