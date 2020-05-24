@@ -78,8 +78,6 @@ export default {
         dateCreated = this.facadeAnnotation.dateCreated
       }
 
-      await this.updateAnnotationCount(this.poiId, type, 1)
-
       const poiRef = this.getPoiRef(this.poiId)
       const updatedPoiRef = await poiRef.collection('annotations').doc(annotationId).set({
         poiId: this.poiId,
@@ -93,24 +91,6 @@ export default {
     },
     getPoiRef: function (poiId) {
       return this.db.collection('pois').doc(poiId)
-    },
-    updateAnnotationCount: async function (poiId, type, increment) {
-      const poiRef = this.getPoiRef(poiId)
-      const poi = await poiRef.get()
-
-      let updatedPoiRef
-      if (increment !== undefined) {
-        const count = (poi.annotations && poi.annotations[type]) || 0
-        updatedPoiRef = await poiRef.update({
-          [`annotations.${type}`]: count + increment
-        })
-      } else {
-        updatedPoiRef = poiRef.update({
-          [`annotations.${type}`]: FieldValue.delete()
-        })
-      }
-
-      return updatedPoiRef
     }
   }
 }
