@@ -24,13 +24,11 @@
       </svg>
     </div>
     <div class="buttons">
-      <button @click="save">Save</button>
+      <button :disabled="saved" @click="save">✅ Opslaan</button>
+      <button :disabled="saved" @click="reset">🔄 Reset</button>
+      <button :disabled="!saved" @click="next">➡️ Volgende</button>
       <span>{{ message }}</span>
-      <button @click="next">Next</button>
     </div>
-  </div>
-  <div v-else>
-    Log in om te beginnen!
   </div>
 </template>
 <script>
@@ -39,32 +37,26 @@ import {update} from 'ramda'
 import FacadeAPI from './FacadeAPI'
 
 export default {
-  mixins: [FacadeAPI],
   props: {
-    poiId: String
+    data: Object,
+    saveAnnotation: Function
   },
   data: function () {
     return {
       color: '#ff86e1',
+      saved: false,
       message: '',
       dimensions: [],
       mask: []
     }
   },
   watch: {
-    annotations: function () {
-      if (this.screenshotAnnotation) {
-        this.dimensions = this.screenshotAnnotation.data.dimensions
-      }
-
-      if (this.facadeAnnotation) {
-        this.mask = this.facadeAnnotation.data.mask
-      } else if (this.screenshotAnnotation) {
-        this.mask = this.makeInitialMask(this.dimensions, 200)
-      }
+    data: function () {
+     this.newAnnotations()
     }
   },
   mounted: function () {
+    this.newAnnotations()
     document.addEventListener('mouseup', this.mouseupHandler)
   },
   beforeDestroy: function () {
@@ -72,16 +64,61 @@ export default {
   },
   computed: {
     name: function () {
-      return this.osmAnnotation && this.osmAnnotation.data.properties.name
+      if (this.osmAnnotation) {
+        return this.osmAnnotation.data.properties.name
+      } else if (this.faillissementsdossierAnnotation) {
+        return this.faillissementsdossierAnnotation.data.name
+      } else {
+        return ''
+      }
+    },
+    screenshotUrl: function () {
+      if (this.screenshotAnnotation) {
+        return this.screenshotAnnotation.data.screenshotUrl
+      } else {
+        return ''
+      }
+    },
+    faillissementsdossierAnnotation: function () {
+      return this.annotationsOfType(this.data.annotations, 'faillissementsdossier')[0]
+    },
+    osmAnnotation: function () {
+      return this.annotationsOfType(this.data.annotations, 'osm')[0]
+    },
+    facadeAnnotation: function () {
+      return this.annotationsOfType(this.data.annotations, 'facade')[0]
+    },
+    screenshotAnnotation: function () {
+      return this.annotationsOfType(this.data.annotations, 'screenshot')[0]
     }
   },
   methods: {
+    newAnnotations: function () {
+       if (this.screenshotAnnotation) {
+        this.dimensions = this.screenshotAnnotation.data.dimensions
+      }
+
+      if (this.facadeAnnotation) {
+        this.mask = this.facadeAnnotation.data.mask
+        this.saved = true
+      } else if (this.screenshotAnnotation) {
+        this.mask = this.makeInitialMask(this.dimensions, 200)
+        this.saved = false
+      }
+    },
+    annotationsOfType: function (annotations, type) {
+      return annotations.filter((annotation) => annotation.type === type)
+    },
     save: async function () {
+      const poiId = this.data.id
+      const annotationId = this.facadeAnnotation && this.facadeAnnotation.id
+
       try {
-        await this.saveAnnotation(this.facadeAnnotationRef.id, 'facade', {
+        await this.saveAnnotation(poiId, 'facade', {
           mask: this.mask
-        })
-        this.message = 'Saved!'
+        }, annotationId)
+        this.message = 'Opgeslagen!'
+        this.saved = true
       } catch (err) {
         this.message = `Error saving: ${err.message}!`
       }
@@ -90,6 +127,10 @@ export default {
       this.$router.push({
         name: 'main'
       })
+    },
+    reset: function () {
+      this.mask = this.facadeAnnotation.data.mask
+      this.saved = true
     },
     mouseupHandler: function () {
       if (this.mouseMoveHandler) {
@@ -137,6 +178,7 @@ export default {
       }
 
       this.mask = update(index, coordinate, this.mask)
+      this.saved = false
     }
   }
 }
@@ -181,12 +223,14 @@ h1, h2, h3 {
 }
 
 .buttons {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
+  padding: 1em;
+  align-items: center;
 }
 
-.buttons > * {
-  padding: 1em;
+.buttons button {
+  margin: 5px;
 }
 
 </style>

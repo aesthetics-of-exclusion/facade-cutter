@@ -2,106 +2,58 @@
   <div id="app">
     <main>
       <div class="container">
-        <div class="loading" v-if="!$route.params.poiId || !db">
+        <div class="loading" v-if="!$route.params.poiId">
           <span>Loading...</span>
         </div>
-        <template v-else-if="$route.name === 'edit'">
-          <EditFacade :db="db" :poiId="$route.params.poiId" />
-        </template>
-        <template v-else-if="$route.name === 'view'">
-          <ViewFacade :db="db" :poiId="$route.params.poiId" />
-        </template>
-        <template v-else>
-          Log in om te beginnen
+        <template v-else-if="data && $route.name === 'edit'">
+          <EditFacade :data="data" :saveAnnotation="saveAnnotation" />
         </template>
       </div>
     </main>
-    <section id="firebaseui-auth-container"></section>
   </div>
 </template>
 
 <script>
-import * as firebase from 'firebase'
-import * as firebaseui from 'firebaseui'
-import 'firebaseui/dist/firebaseui.css'
-
-const redirectUrl = process.env.VUE_APP_REDIRECT_URL
-
-const uiConfig = {
-  signInSuccessUrl: redirectUrl,
-  signInFlow: 'popup',
-  signInOptions: [
-    firebase.auth.GoogleAuthProvider.PROVIDER_ID
-  ]
-}
-
 import EditFacade from './components/EditFacade'
+import FacadeAPI from './components/FacadeAPI'
 
 export default {
   name: 'App',
+  mixins: [FacadeAPI],
   components: {
     EditFacade
   },
   data: function () {
     return {
-      db: undefined,
-      error: undefined
     }
   },
   watch: {
-     '$route.params.poiId': function () {
-       if (!this.$route.params.poiId) {
-         this.loadScreenshot()
-       }
-     }
-  },
-  methods: {
-    loadScreenshot: async function () {
-      try {
-        const query = this.db.collection('pois')
-          .where('annotations.facade', '==', 0)
-          .limit(1)
-
-        const annotationRefs = await query.get()
-
-        if (annotationRefs.empty) {
-          throw new Error('No POIs found')
-        } else {
-          const poiId = annotationRefs.docs[0].id
-
-          if (this.$route.name === 'main') {
-            this.$router.push({
-              name: 'edit',
-              params: {
-                poiId
-              }
-            })
-          }
-        }
-      } catch (err) {
-        console.error(err)
-        this.error = err.message
+    '$route.params.poiId': function () {
+      this.loadAnnotations(this.$route.params.poiId)
+    },
+    poiId: function (newPoiId) {
+      if (newPoiId === this.$route.params.poiId) {
+        return
       }
+
+      this.$router.push({
+        name: 'edit',
+        params: {
+          poiId: newPoiId
+        }
+      })
     }
   },
-  created: function () {
-    firebase.auth().onAuthStateChanged((user) => {
-      this.user = user
-    })
+  computed: {
+    poiId: function () {
+      return this.data && this.data.id
+    }
   },
   mounted: async function () {
-    let ui = firebaseui.auth.AuthUI.getInstance()
-    if (!ui) {
-      ui = new firebaseui.auth.AuthUI(firebase.auth())
-    }
-
-    ui.start('#firebaseui-auth-container', uiConfig)
-    this.ui = ui
-
-    this.db = firebase.firestore()
-
     if (this.$route.name === 'main') {
-      this.loadScreenshot()
+      this.loadAnnotations()
+    } else {
+      this.loadAnnotations(this.$route.params.poiId)
     }
   }
 }
