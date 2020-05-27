@@ -26,7 +26,7 @@
     <div class="buttons">
       <button :disabled="saved" @click="save">✅ Opslaan</button>
       <button :disabled="saved" @click="reset">🔄 Reset</button>
-      <button :disabled="!saved" @click="next">➡️ Volgende</button>
+      <button @click="next">➡️ Volgende</button>
       <span>{{ message }}</span>
     </div>
   </div>
@@ -129,8 +129,13 @@ export default {
       })
     },
     reset: function () {
-      this.mask = this.facadeAnnotation.data.mask
-      this.saved = true
+      if (this.facadeAnnotation) {
+        this.mask = this.facadeAnnotation.data.mask
+        this.saved = true
+      } else {
+        this.mask = this.makeInitialMask(this.dimensions, 200)
+        this.saved = false
+      }
     },
     mouseupHandler: function () {
       if (this.mouseMoveHandler) {
