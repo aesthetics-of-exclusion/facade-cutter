@@ -18,7 +18,8 @@
         <g>
           <circle v-for="({x, y}, index) in mask" :key="index" :ref="`point${index}`"
             @mousedown="(event) => circleMousedown(event, index)"
-            :cx="x" :cy="y" r="15"
+            @touchstart="(event) => circleTouchstart(event, index)"
+            :cx="x" :cy="y" r="30"
             stroke="rgba(0, 0, 0, 255)" stroke-width="5" :fill="color" />
         </g>
       </svg>
@@ -58,9 +59,11 @@ export default {
   mounted: function () {
     this.newAnnotations()
     document.addEventListener('mouseup', this.mouseupHandler)
+    document.addEventListener('touchend', this.touchendHandler)
   },
   beforeDestroy: function () {
     document.removeEventListener('mouseup', this.mouseupHandler)
+    document.removeEventListener('touchend', this.touchendHandler)
   },
   computed: {
     name: function () {
@@ -137,9 +140,14 @@ export default {
         this.saved = false
       }
     },
+    touchendHandler: function () {
+      if (this.touchmoveHandler) {
+        document.removeEventListener('touchmove', this.touchmoveHandler)
+      }
+    },
     mouseupHandler: function () {
-      if (this.mouseMoveHandler) {
-        document.removeEventListener('mousemove', this.mouseMoveHandler)
+      if (this.mousemoveHandler) {
+        document.removeEventListener('mousemove', this.mousemoveHandler)
       }
     },
     makeInitialMask: function (dimensions, padding) {
@@ -162,15 +170,29 @@ export default {
       return this.mask.map((point) => [point.x, point.y].join(',')).join(' ')
     },
     circleMousedown: function (event, index) {
-      this.mouseMoveHandler = (event) => this.circleMousemove(event, index)
-      document.addEventListener('mousemove', this.mouseMoveHandler)
+      this.mousemoveHandler = (event) => this.circleMousemove(event, index)
+      document.addEventListener('mousemove', this.mousemoveHandler)
+    },
+    circleTouchstart: function (event, index) {
+      this.touchmoveHandler = (event) => this.circleTouchmove(event, index)
+      document.addEventListener('touchmove', this.touchmoveHandler)
+    },
+    circleTouchmove: function (event, index) {
+      const x = event.touches[0].pageX
+      const y = event.touches[0].pageY
+      this.circleMove(x, y, index)
     },
     circleMousemove: function (event, index) {
+      const x = event.pageX
+      const y = event.pageY
+      this.circleMove(x, y, index)
+    },
+    circleMove: function (eventX, eventY, index) {
       const svg = this.$refs.svg
 
       const circle = svg.createSVGPoint()
-      circle.x = event.pageX
-      circle.y = event.pageY
+      circle.x = eventX
+      circle.y = eventY
 
       const transformedCircle = circle.matrixTransform(svg.getScreenCTM().inverse())
 
