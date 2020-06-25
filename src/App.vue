@@ -15,11 +15,11 @@
 
 <script>
 import EditFacade from './components/EditFacade'
-import FacadeAPI from './components/FacadeAPI'
+import API from './components/API'
 
 export default {
   name: 'App',
-  mixins: [FacadeAPI],
+  mixins: [API],
   components: {
     EditFacade
   },
@@ -29,7 +29,7 @@ export default {
   },
   watch: {
     '$route.params.poiId': function () {
-      this.loadAnnotations(this.$route.params.poiId)
+      this.loadAnnotations(this.$route.params.poiId, this.$route.query.source)
     },
     poiId: function (newPoiId) {
       if (newPoiId === this.$route.params.poiId) {
@@ -40,7 +40,8 @@ export default {
         name: 'edit',
         params: {
           poiId: newPoiId
-        }
+        },
+        query: this.$route.query
       })
     }
   },
@@ -51,7 +52,7 @@ export default {
   },
   mounted: async function () {
     if (this.$route.name === 'main') {
-      this.loadAnnotations()
+      this.loadAnnotations(undefined, this.$route.query.source)
     } else {
       this.loadAnnotations(this.$route.params.poiId)
     }
@@ -64,6 +65,63 @@ export default {
   box-sizing: border-box;
 }
 
+html, body {
+  font-family: proxima-nova, sans-serif;
+  font-size: 62.5%;
+}
+
+@media screen and (max-width: 569px) {
+  html {
+    font-size: 37.5%;
+  }
+}
+
+@media screen and (min-width: 570px) {
+  html {
+    font-size: 45%;
+  }
+}
+
+@media screen and (min-width: 620px) {
+  html{
+    font-size: 47.5%;
+  }
+}
+@media screen and (min-width: 680px) {
+  html {
+    font-size: 50%;
+  }
+}
+
+@media screen and (min-width: 720px){
+  html{
+    font-size: 52.5%;
+  }
+}
+@media screen and (min-width: 800px) {
+  html {
+    font-size: 55%;
+  }
+}
+
+@media screen and (min-width: 860px){
+  html {
+    font-size: 57.5%;
+  }
+}
+
+@media screen and (min-width: 920px) {
+  html {
+    font-size: 60%;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  html {
+    font-size: 62.5%;
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -71,8 +129,6 @@ body {
   height: 100%;
   top: 0;
   position: absolute;
-  font-family: monospace;
-  font-size: 16px;
 }
 
 #app {
@@ -90,6 +146,7 @@ section {
   width: 100%;
   height: 100%;
   flex-shrink: 1;
+  font-size: 2.6rem;
   display: flex;
   align-items: center;
   justify-content: center;

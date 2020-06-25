@@ -1,33 +1,38 @@
 <template>
   <div v-if="screenshotAnnotation" class="edit">
-    <h2>{{ name }} </h2>
+    <template v-if="$route.query.metadata === 'show'">
+      <h2>{{ name }} </h2>
+      <h3>{{ addressAnnotation.data.address }}</h3>
+    </template>
+
     <div class="facade">
       <img :src="screenshotUrl" />
       <svg ref="svg"
         viewBox="0 0 2880 1800" xmlns="http://www.w3.org/2000/svg">
         <g>
-          <polygon :points="polygonPoints()" style="fill:rgba(70, 90, 200, 0.4);stroke:purple;stroke-width:1" />
+          <polygon :points="polygonPoints()" />
         </g>
-        <g>
+        <!-- <g>
           <line v-for="({x, y}, index) in mask" :key="index"
             :x1="x" :y1="y"
             :x2="previousPoint(index).x" :y2="previousPoint(index).y"
             stroke-width="5"
             :stroke="color" />
-        </g>
+        </g> -->
         <g>
           <circle v-for="({x, y}, index) in mask" :key="index" :ref="`point${index}`"
             @mousedown="(event) => circleMousedown(event, index)"
             @touchstart="(event) => circleTouchstart(event, index)"
-            :cx="x" :cy="y" r="30"
-            stroke="rgba(0, 0, 0, 255)" stroke-width="5" :fill="color" />
+            :cx="x" :cy="y" r="30" />
         </g>
       </svg>
     </div>
     <div class="buttons">
-      <button :disabled="saved" @click="save">✅ Opslaan</button>
-      <button :disabled="saved" @click="reset">🔄 Reset</button>
-      <button @click="next">➡️ Volgende</button>
+      <button class="gradient-button gradient-button-primary" :disabled="saved" @click="save">
+        {{ saved ? 'Saved!' : 'Save' }}
+      </button>
+      <button class="gradient-button" :disabled="saved" @click="reset">Reset</button>
+      <button class="gradient-button gradient-button-secondary" @click="next">Next</button>
       <span>{{ message }}</span>
     </div>
   </div>
@@ -35,7 +40,6 @@
 <script>
 import {update} from 'ramda'
 
-import FacadeAPI from './FacadeAPI'
 
 export default {
   props: {
@@ -53,7 +57,7 @@ export default {
   },
   watch: {
     data: function () {
-     this.newAnnotations()
+      this.newAnnotations()
     }
   },
   mounted: function () {
@@ -84,6 +88,9 @@ export default {
     },
     faillissementsdossierAnnotation: function () {
       return this.annotationsOfType(this.data.annotations, 'faillissementsdossier')[0]
+    },
+    addressAnnotation: function () {
+      return this.annotationsOfType(this.data.annotations, 'address')[0]
     },
     osmAnnotation: function () {
       return this.annotationsOfType(this.data.annotations, 'osm')[0]
@@ -120,7 +127,6 @@ export default {
         await this.saveAnnotation(poiId, 'facade', {
           mask: this.mask
         }, annotationId)
-        this.message = 'Opgeslagen!'
         this.saved = true
       } catch (err) {
         this.message = `Error saving: ${err.message}!`
@@ -128,7 +134,8 @@ export default {
     },
     next: function () {
       this.$router.push({
-        name: 'main'
+        name: 'main',
+        query: this.$route.query
       })
     },
     reset: function () {
@@ -163,9 +170,9 @@ export default {
         {x: minX + padding, y: maxY - padding}
       ]
     },
-    previousPoint: function (index) {
-      return this.mask[(index - 1 + this.mask.length) % this.mask.length]
-    },
+    // previousPoint: function (index) {
+    //   return this.mask[(index - 1 + this.mask.length) % this.mask.length]
+    // },
     polygonPoints: function () {
       return this.mask.map((point) => [point.x, point.y].join(',')).join(' ')
     },
@@ -214,6 +221,8 @@ export default {
 <style scoped>
 h1, h2, h3 {
   text-align: center;
+  font-size: 2.6rem;
+  margin: .5rem;
 }
 
 .edit {
@@ -249,6 +258,18 @@ h1, h2, h3 {
   cursor: pointer;
 }
 
+.facade svg circle {
+  stroke: white;
+  stroke-width: 10;
+  fill: rgba(247, 6, 131, 1);
+}
+
+.facade svg polygon {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: rgba(7, 248, 134, 1);
+  stroke-width: 10;
+}
+
 .buttons {
   display: flex;
   justify-content: center;
@@ -260,4 +281,43 @@ h1, h2, h3 {
   margin: 5px;
 }
 
+.gradient-button {
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 800;
+  text-decoration: none;
+  text-align: center;
+  font-size: 2.6rem;
+  line-height: 12rem;
+  border: none;
+  border-radius: 5rem;
+  height: 12rem;
+  width: 12rem;
+  box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+  margin: 0 auto;
+  display: block;
+
+  background: rgba(100,100,100,1);
+  background: linear-gradient(48deg, rgba(100,100,100,1) 0%, rgba(150,150,150,1) 100%);
+}
+
+.gradient-button:hover {
+  color: #fff;
+  background: #323232;
+}
+
+.gradient-button-primary {
+  background: rgb(169,84,168);
+  background: linear-gradient(48deg, rgba(169,84,168,1) 0%, rgba(247,6,131,1) 100%);
+}
+
+.gradient-button-secondary {
+  background: rgb(59,190,189);
+  background: linear-gradient(48deg, rgba(59,190,189,1) 0%, rgba(7,248,134,1) 100%);
+}
+
+.gradient-button:disabled {
+  background: rgb(180, 180, 180);
+  background: linear-gradient(48deg, rgb(180, 180, 180) 0%, rgb(220, 220, 220) 100%);
+}
 </style>
