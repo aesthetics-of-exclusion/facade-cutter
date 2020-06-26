@@ -2,9 +2,15 @@
   <div id="app">
     <main>
       <div class="container">
-        <div class="loading" v-if="!$route.params.poiId">
-          <span>Loading...</span>
-        </div>
+        <template v-if="done">
+          <p class="text">Done! All work is done.</p>
+        </template>
+        <template v-else-if="error">
+          <p class="text error">{{ error }}</p>
+        </template>
+        <template v-else-if="!$route.params.poiId">
+          <span class="text loading">Loading…</span>
+        </template>
         <template v-else-if="data && $route.name === 'edit'">
           <EditFacade :data="data" :saveAnnotation="saveAnnotation" />
         </template>
@@ -142,7 +148,7 @@ section {
   padding: 1em;
 }
 
-.loading {
+.text {
   width: 100%;
   height: 100%;
   flex-shrink: 1;
