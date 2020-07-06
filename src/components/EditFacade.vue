@@ -31,7 +31,7 @@
       <button class="gradient-button gradient-button-primary" :disabled="saved" @click="save">
         {{ saved ? 'Saved!' : 'Save' }}
       </button>
-      <button class="gradient-button" :disabled="saved" @click="reset">Reset</button>
+      <!-- <button class="gradient-button" :disabled="saved" @click="reset">Reset</button> -->
       <button class="gradient-button gradient-button-secondary" @click="next">Next</button>
       <span>{{ message }}</span>
     </div>
