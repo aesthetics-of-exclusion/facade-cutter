@@ -32,6 +32,7 @@
         {{ saved ? 'Saved!' : 'Save' }}
       </button>
       <!-- <button class="gradient-button" :disabled="saved" @click="reset">Reset</button> -->
+      <button class="gradient-button" @click="next">Skip</button>
       <button class="gradient-button gradient-button-secondary" @click="next">Next</button>
       <span>{{ message }}</span>
     </div>
@@ -279,6 +280,12 @@ h1, h2, h3 {
 
 .buttons button {
   margin: 5px;
+}
+
+button:focus {
+  border: none;
+  outline:none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .gradient-button {
