@@ -165,13 +165,14 @@ a, a:visited {
 main {
   flex-grow: 1;
   overflow-y: auto;
+  display: flex;
 }
 
 .container {
   margin: 0 auto;
   width: 800px;
-  height: 100%;
-  min-height: 100%;
   max-width: 100%;
+  display: flex;
+  justify-content: center;
 }
 </style>

@@ -230,6 +230,7 @@ h1, h2, h3 {
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
 }
 
 .facade {
@@ -274,6 +275,7 @@ h1, h2, h3 {
 .buttons {
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
   padding: 1em;
   align-items: center;
 }
